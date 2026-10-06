@@ -383,6 +383,7 @@ func (s *Service) GetAgentInformation(ctx context.Context, _ *agentv0.AgentInfor
 	}
 
 	advertisement := services.Advertisement{
+		Validation: validationCapabilities(),
 		Backends: runnersbase.BackendSupport{
 			Nix:    true,
 			Docker: true,

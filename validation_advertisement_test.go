@@ -13,26 +13,12 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// TestAgentRemainsLegacyUntilTestsAreSchedulable is the gate on the whole
-// contract. An advertised message is authoritative for the operations it omits
-// too, and a caller answers an unsupported test operation by failing the run
-// rather than skipping it, so advertising this message while no suite exists
-// turns a passing test phase into a failing one for every service this agent
-// serves. Leaving the advertisement absent keeps callers probing the RPCs.
-func TestAgentRemainsLegacyUntilTestsAreSchedulable(t *testing.T) {
+// The shared declaration must reach callers without losing supported operations.
+func TestAgentAdvertisesImplementedValidation(t *testing.T) {
 	information, err := NewService().GetAgentInformation(t.Context(), &agentv0.AgentInformationRequest{})
 	require.NoError(t, err)
-
-	test := validationCapabilities().GetTest()
-	if !test.GetSupported() {
-		require.Nil(t, information.GetValidation(),
-			"advertising a contract that declares test unsupported fails the test phase instead of skipping it")
-		return
-	}
-	// Once a suite exists the gate releases, but an inventory is what makes the
-	// declaration schedulable at all.
-	require.NotEmpty(t, test.GetSuites())
-	require.NotNil(t, information.GetValidation())
+	require.Equal(t, validationCapabilities(), information.GetValidation())
+	require.False(t, information.GetValidation().GetTest().GetSupported())
 }
 
 // answered reports whether an RPC serves an operation at all. Two different
